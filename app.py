@@ -18,9 +18,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+FAVICON_PATH = Path(__file__).resolve().parent / "assets" / "paxel_favicon.png"
+
 st.set_page_config(
     page_title="Signal by Paxel",
-    page_icon="💊",
+    page_icon=str(FAVICON_PATH),
     layout="wide",
     initial_sidebar_state="collapsed",
 )
