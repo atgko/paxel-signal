@@ -106,7 +106,7 @@ def _save_upload_to_temp(uploaded_file) -> str:
 
 
 st.write("Upload your transcript files to get started.")
-st.write("Accepts Gemini-generated meeting notes in .docx or .txt format.")
+st.write("Accepts meeting transcriptions in .docx or .txt format.")
 st.write("You can upload multiple files at once.")
 
 uploaded_files = st.file_uploader(

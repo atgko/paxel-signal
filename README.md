@@ -7,7 +7,7 @@ buried in hours of recorded feedback.
 
 ## What It Does
 
-Upload your Gemini-generated meeting notes. Signal reads every transcript,
+Upload your meeting transcriptions. Signal reads every transcript,
 identifies what your users are asking for, groups patterns across calls, and
 produces a report you can act on in 5 minutes.
 
