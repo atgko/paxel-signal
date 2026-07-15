@@ -74,11 +74,11 @@ st.markdown(
 st.markdown(
     f"""
     <div style='display: flex; align-items: center; gap: 0.75rem; padding: 1.5rem 0 0.5rem 0;'>
-        <h1 style='font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0;'>
+        <div style='font-family: "Urbanist", sans-serif; font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0;'>
             <span style='background: linear-gradient({PAXEL_GRADIENT});
                        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
                        background-clip: text;'>Signal</span> <span style='color: #98A2B3; font-weight: 300; font-size: 1.25rem;'>by</span>
-        </h1>
+        </div>
         <img src='data:image/png;base64,{LOGO_B64}' style='height: 26px; margin-top: 2px;' alt='Paxel'/>
     </div>
     <p style='color: #667085; font-size: 0.95rem; margin-top: 0.25rem;'>
