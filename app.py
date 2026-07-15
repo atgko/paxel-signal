@@ -129,6 +129,22 @@ def _copy_button(text: str, label: str):
     )
 
 
+def _render_progress(placeholder, fraction: float, label: str):
+    pct = max(0, min(100, int(fraction * 100)))
+    placeholder.markdown(
+        f"""
+        <div style='margin: 0.5rem 0 1.5rem 0;'>
+            <div style='color: #667085; font-size: 0.85rem; margin-bottom: 0.4rem;'>{label}</div>
+            <div style='background: #EDE9F7; border-radius: 999px; height: 10px; overflow: hidden;'>
+                <div style='width: {pct}%; height: 100%; background: linear-gradient({PAXEL_GRADIENT});
+                            border-radius: 999px; transition: width 0.4s ease;'></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _save_upload_to_temp(uploaded_file) -> str:
     suffix = os.path.splitext(uploaded_file.name)[1]
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
@@ -149,27 +165,31 @@ run_clicked = st.button("Run Analysis", disabled=not uploaded_files)
 
 if run_clicked:
     extractor_outputs = []
+    n_files = len(uploaded_files)
+    progress_placeholder = st.empty()
+    _render_progress(progress_placeholder, 0.0, "Reading transcripts...")
 
-    with st.spinner("Reading transcripts..."):
-        pass
-
-    for uploaded_file in uploaded_files:
-        with st.spinner(f"Extracting insights from {uploaded_file.name}..."):
-            tmp_path = None
-            try:
-                tmp_path = _save_upload_to_temp(uploaded_file)
-                result = extract_insights(tmp_path, api_key=api_key)
-            except TranscriptReadError:
-                st.warning(f"⚠️ Could not read {uploaded_file.name} — skipping.")
-                continue
-            except Exception as e:
-                st.error(f"Analysis failed: {e}")
-                with st.expander(f"Debug details — {uploaded_file.name}"):
-                    st.code(traceback.format_exc())
-                continue
-            finally:
-                if tmp_path and os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
+    for idx, uploaded_file in enumerate(uploaded_files, start=1):
+        _render_progress(
+            progress_placeholder,
+            (idx - 1) / n_files * 0.7,
+            f"Extracting insights from {uploaded_file.name}... ({idx} of {n_files})",
+        )
+        tmp_path = None
+        try:
+            tmp_path = _save_upload_to_temp(uploaded_file)
+            result = extract_insights(tmp_path, api_key=api_key)
+        except TranscriptReadError:
+            st.warning(f"⚠️ Could not read {uploaded_file.name} — skipping.")
+            continue
+        except Exception as e:
+            st.error(f"Analysis failed: {e}")
+            with st.expander(f"Debug details — {uploaded_file.name}"):
+                st.code(traceback.format_exc())
+            continue
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
         if not result.get("insights"):
             st.info(f"No insights found in {uploaded_file.name}.")
@@ -178,12 +198,15 @@ if run_clicked:
         extractor_outputs.append(result)
 
     if extractor_outputs:
-        with st.spinner("Synthesizing patterns across all calls..."):
-            synthesis = synthesize(extractor_outputs, api_key=api_key)
-            matrix_df, top_df = build_needs_matrix(extractor_outputs)
+        _render_progress(progress_placeholder, 0.75, "Synthesizing patterns across all calls...")
+        synthesis = synthesize(extractor_outputs, api_key=api_key)
+        matrix_df, top_df = build_needs_matrix(extractor_outputs)
 
-        with st.spinner("Generating your weekly report..."):
-            report_md, email_draft = generate_report(synthesis, matrix_df, api_key=api_key)
+        _render_progress(progress_placeholder, 0.9, "Generating your weekly report...")
+        report_md, email_draft = generate_report(synthesis, matrix_df, api_key=api_key)
+
+        _render_progress(progress_placeholder, 1.0, "Done!")
+        progress_placeholder.empty()
 
         st.session_state["results"] = {
             "extractor_outputs": extractor_outputs,
@@ -194,6 +217,7 @@ if run_clicked:
             "email_draft": email_draft,
         }
     else:
+        progress_placeholder.empty()
         st.error("No transcripts could be processed.")
         st.session_state.pop("results", None)
 
