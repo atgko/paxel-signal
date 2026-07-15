@@ -257,16 +257,12 @@ if "results" in st.session_state:
     with tab_report:
         st.markdown(report_md)
 
-        dl_col, copy_col = st.columns([1, 1])
-        with dl_col:
-            st.download_button(
-                "⬇️ Download Report",
-                report_md,
-                f"signal_report_{today_str}.md",
-                "text/markdown",
-            )
-        with copy_col:
-            _copy_button(report_md, "📋 Copy to Clipboard")
+        st.download_button(
+            "⬇️ Download Report",
+            report_md,
+            f"signal_report_{today_str}.md",
+            "text/markdown",
+        )
 
         if email_draft:
             with st.expander("✉️ Email Draft — ready to send to your team"):
