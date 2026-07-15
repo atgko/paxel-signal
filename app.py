@@ -1,8 +1,10 @@
+import base64
 import json
 import os
 import tempfile
 import traceback
 from datetime import date
+from pathlib import Path
 
 # Use the OS trust store for TLS verification — some corporate/campus networks
 # intercept HTTPS with a CA that's trusted by Windows but not by certifi's bundle.
@@ -42,18 +44,45 @@ from agent.synthesizer import build_needs_matrix, matrix_to_csv, synthesize
 
 os.makedirs("outputs", exist_ok=True)
 
+# Paxel brand palette, sourced directly from paxel.ai's compiled CSS/assets:
+# primary purple (--Colors-Brand-700) and the signature icon gradient.
+PAXEL_PURPLE = "#683ECC"
+PAXEL_GRADIENT = "135deg, #683ECC 0%, #9030D3 66.35%, #C21FDB 100%"
+
+LOGO_PATH = Path(__file__).resolve().parent / "assets" / "paxel_logo.png"
+LOGO_B64 = base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
+
 st.markdown(
     """
-    <div style='padding: 1.5rem 0 0.5rem 0;'>
-        <h1 style='color: #00C2C7; font-size: 2rem; font-weight: 700;
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Urbanist:wght@700&display=swap');
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3 {
+        font-family: 'Urbanist', sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    f"""
+    <div style='display: flex; align-items: center; gap: 0.75rem; padding: 1.5rem 0 0.5rem 0;'>
+        <h1 style='background: linear-gradient({PAXEL_GRADIENT});
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                   background-clip: text; font-size: 2rem; font-weight: 700;
                    letter-spacing: -0.5px; margin-bottom: 0;'>
-            Signal <span style='color: #F0F0F0; font-weight: 300;'>by Paxel</span>
+            Signal
         </h1>
-        <p style='color: #888888; font-size: 0.95rem; margin-top: 0.25rem;'>
-            Turn every call into a clear next step.
-        </p>
+        <span style='color: #98A2B3; font-weight: 300; font-size: 1.25rem;'>by</span>
+        <img src='data:image/png;base64,{LOGO_B64}' style='height: 26px; margin-top: 2px;' alt='Paxel'/>
     </div>
-    <hr style='border-color: #222222; margin: 0.5rem 0 1.5rem 0;'>
+    <p style='color: #667085; font-size: 0.95rem; margin-top: 0.25rem;'>
+        Turn every call into a clear next step.
+    </p>
+    <hr style='border-color: #EAECF0; margin: 0.5rem 0 1.5rem 0;'>
     """,
     unsafe_allow_html=True,
 )
@@ -62,10 +91,10 @@ st.markdown(
 def _metric_card(value, label):
     st.markdown(
         f"""
-        <div style='background: #141414; border: 1px solid #222222; border-radius: 8px;
+        <div style='background: #F9FAFB; border: 1px solid #EAECF0; border-radius: 8px;
                     padding: 1rem 1.5rem; display: inline-block; margin-right: 1rem;'>
-            <div style='color: #00C2C7; font-size: 1.5rem; font-weight: 700;'>{value}</div>
-            <div style='color: #888888; font-size: 0.8rem;'>{label}</div>
+            <div style='color: {PAXEL_PURPLE}; font-size: 1.5rem; font-weight: 700;'>{value}</div>
+            <div style='color: #667085; font-size: 0.8rem;'>{label}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -88,8 +117,9 @@ def _copy_button(text: str, label: str):
     st.components.v1.html(
         f"""
         <button onclick="navigator.clipboard.writeText(`{escaped}`)"
-          style="background:#00C2C7; color:#0A0A0A; border:none; padding:0.4rem 1rem;
-                 border-radius:4px; font-weight:600; cursor:pointer; font-size:0.875rem;">
+          style="background:linear-gradient({PAXEL_GRADIENT}); color:#FFFFFF; border:none;
+                 padding:0.4rem 1rem; border-radius:6px; font-weight:600; cursor:pointer;
+                 font-size:0.875rem; font-family:'Inter',sans-serif;">
           {label}
         </button>
         """,
