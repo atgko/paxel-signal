@@ -82,7 +82,7 @@ st.markdown(
     <p style='color: #667085; font-size: 0.95rem; margin-top: 0.25rem;'>
         Turn every call into a clear next step.
     </p>
-    <hr style='border-color: #EAECF0; margin: 0.5rem 0 1.5rem 0;'>
+    <hr style='border-color: #E4DEF0; margin: 0.5rem 0 1.5rem 0;'>
     """,
     unsafe_allow_html=True,
 )
@@ -91,7 +91,7 @@ st.markdown(
 def _metric_card(value, label):
     st.markdown(
         f"""
-        <div style='background: #F9FAFB; border: 1px solid #EAECF0; border-radius: 8px;
+        <div style='background: #FFFFFF; border: 1px solid #E4DEF0; border-radius: 8px;
                     padding: 1rem 1.5rem; display: inline-block; margin-right: 1rem;'>
             <div style='color: {PAXEL_PURPLE}; font-size: 1.5rem; font-weight: 700;'>{value}</div>
             <div style='color: #667085; font-size: 0.8rem;'>{label}</div>
