@@ -1,0 +1,196 @@
+{
+  "total_calls_analyzed": 2,
+  "date_range": "2025-05-01 to 2026-06-17",
+  "critical_bugs": [
+    {
+      "persona": "Sales Rep",
+      "quote": "The biggest struggle that I have on the accounts page is that it defaults to searching by owner.",
+      "insight_type": "Bug",
+      "summary": "Account search defaults to 'owner' filter, causing reps who need cross-territory visibility (e.g., covering for colleagues) to miss results and think accounts don't exist.",
+      "priority_signal": "High",
+      "product_area": "Search & Navigation"
+    }
+  ],
+  "data_problems": [
+    {
+      "persona": "Sales Rep",
+      "quote": "today I got credit for a new order, but it was not new, meaning that they order every 6 months. So, it was new on the definition of comp, but they are reoccurring customer. If it's new, I need to see a difference between that and someone that's just new visav the designation of the incentive plan.",
+      "insight_type": "Data Problem",
+      "summary": "System does not distinguish between a truly new customer and a recurring customer whose reorder is flagged as \"new\" for comp purposes, causing confusion.",
+      "priority_signal": "High",
+      "product_area": "Data & Identifiers"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "those tasks sit inside 100% of the time an opportunity. There is no random task that's right.",
+      "insight_type": "Data Problem",
+      "summary": "Tasks should always be nested under an opportunity; standalone tasks don't reflect how reps actually work.",
+      "priority_signal": "High",
+      "product_area": "Opportunities"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "there's nowhere in the entire company even contracts that I can go for a source of truth list of that period at all... it's stuff that can fall through the cracks and I have to ask once in a while",
+      "insight_type": "Data Problem",
+      "summary": "No centralized source of truth exists for direct contract data; rep must manually chase contracting team periodically.",
+      "priority_signal": "Medium",
+      "product_area": "Contracts & Pricing"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "you could put here is your monthto date and how much each person or each client has used visav rolling quarter or rolling month or what they should be ordering... quarters are irrelevant to us anymore... we are monthtomonth",
+      "insight_type": "Data Problem",
+      "summary": "Rolling quarter view is irrelevant for this business; data should be structured around monthly cycles and individual customer reorder cadence instead.",
+      "priority_signal": "Medium",
+      "product_area": "Dashboard"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I would love to see because who's Marissa? No clue, So what I would say is what's the account, what's the actual name of the hospital? GO and wholesaler are all I mean we can never ever see enough of that.",
+      "insight_type": "Data Problem",
+      "summary": "Meeting/task cards lack sufficient contextual detail (account name, GPO, wholesaler) making it hard to recall who a contact is.",
+      "priority_signal": "Medium",
+      "product_area": "Contacts"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "there's tons of stuff that's open the company because we weren't going to sell that drug anymore closed all the ops so we can't even see them. they went away and then a year and a half later they decided we are going to sell that product again. So we lost all of that.",
+      "insight_type": "Data Problem",
+      "summary": "Bulk-closing opportunities for discontinued products causes permanent loss of historical data when products are relaunched later.",
+      "priority_signal": "High",
+      "product_area": "Opportunities"
+    }
+  ],
+  "compliance_flags": [],
+  "top_insights_by_frequency": [
+    {
+      "insight_summary": "GPO/wholesaler contract and pricing data needs to be prominent, auto-populated, and centralized",
+      "mention_count": 7,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Contracts & Pricing",
+      "supporting_quotes": [
+        "everything always as a rule you need to have GO wholesaler up top and I didn't see that anywhere but it has to be up top that's like our eye is trained to go there",
+        "if the computer loaded Premiere up here, it would populate some of this pricing down here. That would be huge. So, I don't have to look that up.",
+        "there's nowhere in the entire company even contracts that I can go for a source of truth list of that period at all... it's stuff that can fall through the cracks and I have to ask once in a while"
+      ]
+    },
+    {
+      "insight_summary": "Surface lapsed, declining, or non-purchasing accounts as opportunities/targets",
+      "mention_count": 5,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Opportunities",
+      "supporting_quotes": [
+        "If there's another one that said they bought from us a year ago and haven't bought since then, I kind of need to know that... due for purchase in the next month. So like I said, I got to keep track with 8,000 little sticky notes here",
+        "these two pieces over here, opportunities and tasks, they need to be correlated with this list of customers that haven't purchased and should have because that's an OP.",
+        "AI should be able to look at a year of data... and say based on what this is and we're crunching it and then also price and all that other kind of stuff these customers... you should be selling to these customers"
+      ]
+    },
+    {
+      "insight_summary": "Real-time inventory visibility is a critical, high-value gap",
+      "mention_count": 3,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Contracts & Pricing",
+      "supporting_quotes": [
+        "there's a fifth square that I would add to intelligence gathering. It's become more to a point since you guys and I have spoken last, but it can be a sore spot, I guess, is what I'm saying. And the fifth one that I would put is inventory.",
+        "let's say for example, we're selling a product that we know we have the GO contract on... we know that we're the cheapest price... and you're going to hear me start to beat that drum every time we talk. That inventory is going to be a big deal.",
+        "I personally sold 2,000. I closed a deal on 2,000 units and it end up that I could only give them 890... there's got to be data out there to where we know... It could be five colors... this is something that we are red would be like there's things right now that we don't have."
+      ]
+    },
+    {
+      "insight_summary": "Account/contact search and default filters don't support cross-territory or full-org visibility",
+      "mention_count": 3,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Search & Navigation",
+      "supporting_quotes": [
+        "The biggest struggle that I have on the accounts page is that it defaults to searching by owner.",
+        "So if there were a way to save that like on a on an individual user level instead of messing with everyone.",
+        "so that's mostly because my role here is changing. So I'm I'm having not only my accounts but I'm doing some um of bills as well from like a customer support standpoint."
+      ]
+    },
+    {
+      "insight_summary": "Opportunity closing/reopening workflow causes historical data loss and unreliable reporting",
+      "mention_count": 3,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Opportunities",
+      "supporting_quotes": [
+        "right now I don't close an opportunity ever... once you close it, I have to create a new opportunity... this is going to be a way that... I would say that whatever way we go, we have to start the way we're going to finish with all this kind of stuff",
+        "there's tons of stuff that's open the company because we weren't going to sell that drug anymore closed all the ops so we can't even see them. they went away and then a year and a half later they decided we are going to sell that product again. So we lost all of that.",
+        "Did it not do that before... Oh, that's really valuable information to have there"
+      ]
+    },
+    {
+      "insight_summary": "Need richer, more detailed notes/tasks tied to follow-ups and contacts for context retention",
+      "mention_count": 4,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Notifications",
+      "supporting_quotes": [
+        "the fact that I I don't have an option to put a note there is not great for my brain. um because it just doesn't retain. So like I'll put a followup and then I don't really remember why I'm following up.",
+        "anytime I I document an Excel I copy paste it here. So like this would be my Excel note and that would be my email.",
+        "I would love to see because who's Marissa? No clue, So what I would say is what's the account, what's the actual name of the hospital? GO and wholesaler are all I mean we can never ever see enough of that."
+      ]
+    },
+    {
+      "insight_summary": "Account-level activity feed / hierarchy visibility needed beyond opportunity or contact level",
+      "mention_count": 3,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Account Overview",
+      "supporting_quotes": [
+        "Is this functionality going to be available on the account pages themselves in terms... that activities all of that will be available there",
+        "Because something similar to that is perhaps maybe in my feedback.",
+        "you're going to want to put hierarchy with this... I've linked both those hospitals... into a hierarchy that's under the whole umbrella of a health system."
+      ]
+    },
+    {
+      "insight_summary": "AI/system explainability: users want to understand why data or recommendations are shown",
+      "mention_count": 3,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Opportunities",
+      "supporting_quotes": [
+        "I would love to click this, hover and the computer tells me, \"Here's why we put that there.\"",
+        "Can you guys help me understand pull through?",
+        "I also don't know much about cost... I can't get over like the difference in price though per contract. It still blows my mind."
+      ]
+    },
+    {
+      "insight_summary": "Opportunity creation should auto-populate key fields (GPO, wholesaler, stage, AMU, naming)",
+      "mention_count": 3,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Opportunities",
+      "supporting_quotes": [
+        "if you want to create an opportunity it's got the probability name contact dollar like all that you would automatically put in your GPO and your wholesaler that's really important to what we do",
+        "there's some things that I think AI should be able to do for everybody automatically inside of this list... Stage would be one. Average monthly usage would be another",
+        "typing in the opportunity name and I know that that takes 15 to 20 seconds. So it should be able to populate exactly... if everything was just like bang, you're saving me that's at least one or two calls of savings amount of time over a day."
+      ]
+    },
+    {
+      "insight_summary": "Distinguish new vs. recurring customers in comp/reporting data",
+      "mention_count": 2,
+      "personas_affected": [
+        "Sales Rep"
+      ],
+      "product_area": "Data & Identifiers",
+      "supporting_quotes": [
+        "today I got credit for a new order, but it was not new, meaning that they order every 6 months. So, it was new on the definition of comp, but they are reoccurring customer. If it's new, I need to see a difference between that and someone that's just new visav the designation of the incentive plan.",
+        "I'd like to see this broken out with new and reoccurring customers... I'd like by product."
+      ]
+    }
+  ]
+}

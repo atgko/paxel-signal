@@ -1,0 +1,17 @@
+Subject: Signal Weekly — Top 3 issues, all pointing to the same root cause
+
+Team,
+
+Only one rep interview this cycle, but it's loaded with signal, and three issues stand out as blocking real work. Sharing the top 3 — full digest has 5 plus bugs and data flags if you want the rest.
+
+1. GPO/wholesaler data isn't where reps look for it. This is the single most-mentioned issue (7 times). Reps are trained to check GPO/wholesaler first thing, every account, every call — and it's buried or missing. Quote: "everything always as a rule you need to have GO wholesaler up top... that's like our eye is trained to go there." Action: put a GPO/wholesaler block at the top of account and opportunity pages, and auto-populate pricing from the linked contract.
+
+2. No way to flag lapsed or declining accounts. Reps are tracking reorder timing on sticky notes because we don't do it for them. Quote: "I got to keep track with 8,000 little sticky notes here." Action: build a reorder-due flag based on historical purchase cadence and auto-create the opportunity.
+
+3. No real-time inventory visibility, and it's costing us credibility in the field. A rep closed a 2,000-unit deal and could only deliver 890 because there's no allocation data available before commitment. This one's escalating — he said he's "going to beat that drum every time we talk." Action: scope inventory data integration and get an availability indicator on the product card before Q3 planning.
+
+One more thing worth flagging even though it didn't make the top 3: closing an opportunity currently makes its history disappear, and when a discontinued product gets relaunched a year later, we lose everything. That's a real risk if it's happening broadly, not just an edge case.
+
+Let me know if you want to discuss any of these before Thursday's sprint.
+
+Luke

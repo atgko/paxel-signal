@@ -1,0 +1,198 @@
+{
+  "call_date": "2026-06-17",
+  "call_title": "Paxel.ai - Product Feedback - Sara Workman (Kessen Pharma)",
+  "participants": [
+    {
+      "name": "Sara Workman",
+      "role": "Sales Rep",
+      "company": "Kessen Pharma"
+    },
+    {
+      "name": "Luke Behrmann",
+      "role": "Paxel Internal",
+      "company": "Paxel.ai"
+    },
+    {
+      "name": "Mat Van Orden",
+      "role": "Paxel Internal",
+      "company": "Paxel.ai"
+    }
+  ],
+  "insights": [
+    {
+      "persona": "Sales Rep",
+      "quote": "Did it not do that before... Oh, that's really valuable information to have there",
+      "insight_type": "Feature Request",
+      "summary": "Rep confirms value in carrying forward decline detail (quarterly/monthly/annual decline context) into the active opportunity list, which previously was lost.",
+      "priority_signal": "Medium",
+      "product_area": "Opportunities"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "Is this functionality going to be available on the account pages themselves in terms... that activities all of that will be available there",
+      "insight_type": "Feature Request",
+      "summary": "Rep wants an activity feed available at the account level, not just opportunity/contact level.",
+      "priority_signal": "Medium",
+      "product_area": "Account Overview"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "Because something similar to that is perhaps maybe in my feedback.",
+      "insight_type": "Feature Request",
+      "summary": "Rep signals interest in general account-level activity feed as a future feedback item.",
+      "priority_signal": "Medium",
+      "product_area": "Account Overview"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I was very upset when you guys changed it to that recent thing the other day. I was like, \"What the hell is happening? Why is nothing coming up? It took me forever to figure it out.\"",
+      "insight_type": "Bug",
+      "summary": "A recent change to the wayfinding page default view caused confusion and disrupted the rep's workflow until reverted.",
+      "priority_signal": "Medium",
+      "product_area": "Search & Navigation"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "The biggest struggle that I have on the accounts page is that it defaults to searching by owner.",
+      "insight_type": "Bug",
+      "summary": "Account search defaults to 'owner' filter, causing reps who need cross-territory visibility (e.g., covering for colleagues) to miss results and think accounts don't exist.",
+      "priority_signal": "High",
+      "product_area": "Search & Navigation"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "So if there were a way to save that like on a on an individual user level instead of messing with everyone.",
+      "insight_type": "Feature Request",
+      "summary": "Rep wants the account search filter default (owner vs. all) to be a persistent, per-user setting rather than a global default, since needs vary by role.",
+      "priority_signal": "High",
+      "product_area": "Search & Navigation"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "so that's mostly because my role here is changing. So I'm I'm having not only my accounts but I'm doing some um of bills as well from like a customer support standpoint.",
+      "insight_type": "Product Story",
+      "summary": "Rep's expanding role (covering colleague's accounts for support) requires searching across all accounts, not just owned accounts, highlighting a cross-territory workflow gap.",
+      "priority_signal": "Medium",
+      "product_area": "Search & Navigation"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I think that would actually be really nice. Yes.",
+      "insight_type": "Feature Request",
+      "summary": "Rep wants ability to share notes with or tag other reps/colleagues on shared accounts (e.g., overlapping IDN coverage).",
+      "priority_signal": "Medium",
+      "product_area": "Notifications"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "Oh, that would be amazing, too. Um just because we are by like we are by state.",
+      "insight_type": "Feature Request",
+      "summary": "Rep wants a map view to filter/browse accounts by state/time zone to help structure daily call scheduling by time zone.",
+      "priority_signal": "Medium",
+      "product_area": "Search & Navigation"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "if I could make this one my homepage instead of that dashboard just because I this is the one I go to all the time, I would.",
+      "insight_type": "Feature Request",
+      "summary": "Rep wants the ability to set the wayfinding/account page as their default homepage instead of the dashboard.",
+      "priority_signal": "Medium",
+      "product_area": "Dashboard"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I'm trying to look at some of the sales data differently than they currently do, and this will be so helpful.",
+      "insight_type": "Product Story",
+      "summary": "Contract performance dashboard (top products/accounts driving performance) provides a new, valued way to analyze sales data beyond current company reporting.",
+      "priority_signal": "Medium",
+      "product_area": "Contracts & Pricing"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I could spend hours looking at this stuff.",
+      "insight_type": "Product Story",
+      "summary": "Rep finds the contract performance drill-down (sorting by trend vs. prior, products/accounts) highly engaging and useful for identifying win-back opportunities.",
+      "priority_signal": "Medium",
+      "product_area": "Contracts & Pricing"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "Can you guys help me understand pull through?",
+      "insight_type": "UI Polish",
+      "summary": "Rep needed clarification on what 'pull through' and the color-coding (green/yellow/red) mean on the contract pricing table, suggesting a need for in-product explanation/tooltips.",
+      "priority_signal": "High",
+      "product_area": "Contracts & Pricing"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I also don't know much about cost... I can't get over like the difference in price though per contract. It still blows my mind.",
+      "insight_type": "Product Story",
+      "summary": "New reps need better contextual education on pricing/contract mechanics (WAC, GPO, dish pricing) directly within the product to interpret large price variances.",
+      "priority_signal": "High",
+      "product_area": "Contracts & Pricing"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "If there's an um a use for this on that trade team, we'd love to actually chat with those individuals.",
+      "insight_type": "Product Story",
+      "summary": "Contract performance and pricing features may have strong value for the customer's internal trade/pricing team (Chuck/Charles and Alexa), suggesting expansion beyond sales reps.",
+      "priority_signal": "Medium",
+      "product_area": "Contracts & Pricing"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "the fact that I I don't have an option to put a note there is not great for my brain. um because it just doesn't retain. So like I'll put a followup and then I don't really remember why I'm following up.",
+      "insight_type": "Feature Request",
+      "summary": "Rep wants richer, more detailed note/task fields attached to follow-ups (similar to HubSpot/Salesforce tasks) so she can recall context and reasons for follow-up later.",
+      "priority_signal": "Medium",
+      "product_area": "Notifications"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "I guess I just have an expectation of finding um something a little more detailed... Yes.",
+      "insight_type": "Product Story",
+      "summary": "Rep's workflow (touching ~40 accounts/day, tracking via external Excel) shows the need for an integrated task/note system with detailed context, replicating what she does in HubSpot/Salesforce today.",
+      "priority_signal": "High",
+      "product_area": "Notifications"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "anytime I I document an Excel I copy paste it here. So like this would be my Excel note and that would be my email.",
+      "insight_type": "Workflow",
+      "summary": "Rep manually maintains an external Excel spreadsheet as her primary task/note system and copy-pastes into Pulse, indicating the current in-app note/follow-up system is insufficiently detailed for her workflow.",
+      "priority_signal": "High",
+      "product_area": "Notifications"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "we sometimes will not open um more than one Excel spreadsheet at a time. I don't know why. There's no real rhyme or reason to it.",
+      "insight_type": "Bug",
+      "summary": "Rep experiences unexplained technical issues opening multiple Excel spreadsheets simultaneously (possibly a local machine/performance issue, not necessarily Paxel-related, but affects her workflow around the product).",
+      "priority_signal": "Medium",
+      "product_area": "Other"
+    },
+    {
+      "persona": "Sales Rep",
+      "quote": "not everyone is utilizing Paxel across um Kessen as I understand it. So there's still I do a lot of documenting. Um sometimes it's triplicate.",
+      "insight_type": "Product Story",
+      "summary": "Incomplete adoption of Paxel across the organization forces reps to document activity redundantly across multiple systems (Paxel, HubSpot, Excel).",
+      "priority_signal": "Medium",
+      "product_area": "Other"
+    }
+  ],
+  "key_themes": [
+    "Follow-up/task notes need more depth and context to match reps' mental workflow (vs. HubSpot/Salesforce experience)",
+    "Search and filtering defaults (owner vs. all accounts) need to be user-configurable to support evolving/cross-territory roles",
+    "Contract performance dashboard and pricing visualizations are highly valued and seen as a differentiator, especially for understanding pull-through and price erosion",
+    "Decliner opportunity workflow improvements (context carry-forward) are well-received and increase usability",
+    "Users want persistent, personalized UI behavior (bookmarks, filter memory) rather than global defaults that serve the majority"
+  ],
+  "suggested_next_steps": [
+    "Sara Workman to send Paxel team her working document/list of product feedback issues before the next call",
+    "Schedule follow-up call next week (same time) to deep dive into Sara's full feedback list",
+    "Paxel team to reach out to Kessen Pharma's trade/pricing team members (Chuck/Charles and Alexa) to discuss contract performance and pricing features",
+    "Adjust default account search filter behavior (owner vs. all) for Sara Workman's use case",
+    "Explore making account-level activity feed a future product enhancement",
+    "Include Vince in follow-up meeting invite per Sara's request"
+  ]
+}
