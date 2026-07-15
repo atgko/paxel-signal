@@ -2,7 +2,9 @@ import base64
 import json
 import os
 import tempfile
+import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
@@ -129,8 +131,13 @@ def _copy_button(text: str, label: str):
     )
 
 
-def _render_progress(placeholder, fraction: float, label: str):
+def _render_progress(placeholder, fraction: float, label: str, time_label: str | None = None):
     pct = max(0, min(100, int(fraction * 100)))
+    time_row = (
+        f"<div style='color: #98A2B3; font-size: 0.75rem; margin-top: 0.35rem;'>{time_label}</div>"
+        if time_label
+        else ""
+    )
     placeholder.markdown(
         f"""
         <div style='margin: 0.5rem 0 1.5rem 0;'>
@@ -139,10 +146,83 @@ def _render_progress(placeholder, fraction: float, label: str):
                 <div style='width: {pct}%; height: 100%; background: linear-gradient({PAXEL_GRADIENT});
                             border-radius: 999px; transition: width 0.4s ease;'></div>
             </div>
+            {time_row}
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+# Rough heuristics for the "estimated time" readout, calibrated loosely against
+# typical Claude API latency for these calls. They don't need to be precise —
+# just close enough that the countdown feels honest rather than stalled.
+_PER_FILE_BASE_SECONDS = 10.0
+_PER_FILE_SECONDS_PER_KB = 0.02
+_SYNTHESIS_BASE_SECONDS = 8.0
+_SYNTHESIS_SECONDS_PER_FILE = 1.5
+_REPORT_BASE_SECONDS = 8.0
+
+
+def _estimate_file_seconds(uploaded_file) -> float:
+    size_kb = getattr(uploaded_file, "size", 0) / 1024
+    return _PER_FILE_BASE_SECONDS + size_kb * _PER_FILE_SECONDS_PER_KB
+
+
+def _estimate_run_seconds(uploaded_files) -> tuple[list[float], float, float]:
+    """Returns (per-file extraction estimates, synthesis estimate, report estimate)."""
+    file_estimates = [_estimate_file_seconds(f) for f in uploaded_files]
+    synthesis_estimate = _SYNTHESIS_BASE_SECONDS + _SYNTHESIS_SECONDS_PER_FILE * len(uploaded_files)
+    report_estimate = _REPORT_BASE_SECONDS
+    return file_estimates, synthesis_estimate, report_estimate
+
+
+def _format_remaining(seconds: float) -> str:
+    if seconds <= 1:
+        return "almost done..."
+    if seconds < 60:
+        return f"~{int(round(seconds))}s remaining"
+    minutes = int(seconds // 60)
+    secs = int(round(seconds - minutes * 60))
+    return f"~{minutes}m {secs}s remaining"
+
+
+def _run_phase(
+    fn,
+    *args,
+    placeholder,
+    label: str,
+    start_frac: float,
+    end_frac: float,
+    phase_seconds: float,
+    run_start: float,
+    total_estimate: float,
+    **kwargs,
+):
+    """Runs fn in a background thread while smoothly animating the progress bar
+    from start_frac toward end_frac, so long blocking API calls don't leave the
+    bar looking frozen. The bar eases toward a soft cap short of end_frac and
+    only snaps to end_frac once fn actually finishes."""
+    soft_cap = start_frac + (end_frac - start_frac) * 0.92
+    phase_start = time.time()
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(fn, *args, **kwargs)
+        while not future.done():
+            elapsed = time.time() - phase_start
+            progress_ratio = 1 - pow(0.5, elapsed / max(phase_seconds, 1))
+            frac = start_frac + (soft_cap - start_frac) * progress_ratio
+            remaining = max(0.0, total_estimate - (time.time() - run_start))
+            _render_progress(placeholder, frac, label, _format_remaining(remaining))
+            time.sleep(0.3)
+        result = future.result()
+
+    _render_progress(
+        placeholder,
+        end_frac,
+        label,
+        _format_remaining(max(0.0, total_estimate - (time.time() - run_start))),
+    )
+    return result
 
 
 def _save_upload_to_temp(uploaded_file) -> str:
@@ -166,19 +246,32 @@ run_clicked = st.button("Run Analysis", disabled=not uploaded_files)
 if run_clicked:
     extractor_outputs = []
     n_files = len(uploaded_files)
+    run_start = time.time()
+    file_estimates, synthesis_estimate, report_estimate = _estimate_run_seconds(uploaded_files)
+    total_estimate = sum(file_estimates) + synthesis_estimate + report_estimate
+
     progress_placeholder = st.empty()
-    _render_progress(progress_placeholder, 0.0, "Reading transcripts...")
+    _render_progress(progress_placeholder, 0.0, "Reading transcripts...", _format_remaining(total_estimate))
 
     for idx, uploaded_file in enumerate(uploaded_files, start=1):
-        _render_progress(
-            progress_placeholder,
-            (idx - 1) / n_files * 0.7,
-            f"Extracting insights from {uploaded_file.name}... ({idx} of {n_files})",
-        )
+        start_frac = (idx - 1) / n_files * 0.7
+        end_frac = idx / n_files * 0.7
+        label = f"Extracting insights from {uploaded_file.name}... ({idx} of {n_files})"
         tmp_path = None
         try:
             tmp_path = _save_upload_to_temp(uploaded_file)
-            result = extract_insights(tmp_path, api_key=api_key)
+            result = _run_phase(
+                extract_insights,
+                tmp_path,
+                api_key=api_key,
+                placeholder=progress_placeholder,
+                label=label,
+                start_frac=start_frac,
+                end_frac=end_frac,
+                phase_seconds=file_estimates[idx - 1],
+                run_start=run_start,
+                total_estimate=total_estimate,
+            )
         except TranscriptReadError:
             st.warning(f"⚠️ Could not read {uploaded_file.name} — skipping.")
             continue
@@ -198,12 +291,33 @@ if run_clicked:
         extractor_outputs.append(result)
 
     if extractor_outputs:
-        _render_progress(progress_placeholder, 0.75, "Synthesizing patterns across all calls...")
-        synthesis = synthesize(extractor_outputs, api_key=api_key)
+        synthesis = _run_phase(
+            synthesize,
+            extractor_outputs,
+            api_key=api_key,
+            placeholder=progress_placeholder,
+            label="Synthesizing patterns across all calls...",
+            start_frac=0.7,
+            end_frac=0.85,
+            phase_seconds=synthesis_estimate,
+            run_start=run_start,
+            total_estimate=total_estimate,
+        )
         matrix_df, top_df = build_needs_matrix(extractor_outputs)
 
-        _render_progress(progress_placeholder, 0.9, "Generating your weekly report...")
-        report_md, email_draft = generate_report(synthesis, matrix_df, api_key=api_key)
+        report_md, email_draft = _run_phase(
+            generate_report,
+            synthesis,
+            matrix_df,
+            api_key=api_key,
+            placeholder=progress_placeholder,
+            label="Generating your weekly report...",
+            start_frac=0.85,
+            end_frac=1.0,
+            phase_seconds=report_estimate,
+            run_start=run_start,
+            total_estimate=total_estimate,
+        )
 
         _render_progress(progress_placeholder, 1.0, "Done!")
         progress_placeholder.empty()
