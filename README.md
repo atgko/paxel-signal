@@ -30,9 +30,25 @@ Download from python.org/downloads. During installation, check "Add Python to PA
 4. Click "Create Key" — give it any name (e.g., "Signal")
 5. Copy the key — you will only see it once
 
-### 3. Download Signal
-Click the green "Code" button on GitHub and choose "Download ZIP."
-Unzip the folder somewhere you can find it (e.g., your Desktop).
+### 3. Get the Code
+Signal lives in a private GitHub repository, so you'll need access first.
+
+**Request access:** Message Athavan Elangko to be added as a collaborator —
+reach out via [GitHub](https://github.com/atgko), email at
+athavan.elangko@gmail.com, or [LinkedIn](https://www.linkedin.com/in/athavan-elangko).
+Once you're added, you'll get an invite email from GitHub — accept it before continuing.
+
+**If you have a GitHub account (recommended):**
+```
+git clone https://github.com/atgko/paxel-signal.git
+cd paxel-signal
+```
+This makes it easy to pull future updates later with `git pull`.
+
+**If you don't use GitHub / prefer a plain download:**
+Once you've been added as a collaborator, go to the repository page, click the
+green "Code" button, and choose "Download ZIP." Unzip the folder somewhere
+you can find it (e.g., your Desktop).
 
 ### 4. Open a terminal in the Signal folder
 - **Mac:** Right-click the folder → "New Terminal at Folder"
