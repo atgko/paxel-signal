@@ -116,14 +116,32 @@ def _escape_for_clipboard_button(text: str) -> str:
 
 def _copy_button(text: str, label: str):
     escaped = _escape_for_clipboard_button(text)
+    # Each st.components.v1.html call renders in its own iframe, so the
+    # unqualified id is safe even with multiple copy buttons on the page.
     st.components.v1.html(
         f"""
-        <button onclick="navigator.clipboard.writeText(`{escaped}`)"
+        <button id="copyBtn" onclick="copyToClipboard()"
           style="background:linear-gradient({PAXEL_GRADIENT}); color:#FFFFFF; border:none;
                  padding:0.4rem 1rem; border-radius:6px; font-weight:600; cursor:pointer;
-                 font-size:0.875rem; font-family:'Inter',sans-serif;">
+                 font-size:0.875rem; font-family:'Inter',sans-serif; transition: background 0.2s ease;">
           {label}
         </button>
+        <script>
+          const btn = document.getElementById("copyBtn");
+          const originalLabel = {json.dumps(label)};
+          const originalBackground = btn.style.background;
+          let revertTimer = null;
+          function copyToClipboard() {{
+            navigator.clipboard.writeText(`{escaped}`);
+            clearTimeout(revertTimer);
+            btn.textContent = "✅ Copied!";
+            btn.style.background = "#12B76A";
+            revertTimer = setTimeout(() => {{
+              btn.textContent = originalLabel;
+              btn.style.background = originalBackground;
+            }}, 1500);
+          }}
+        </script>
         """,
         height=45,
     )
@@ -184,6 +202,36 @@ def _format_remaining(seconds: float) -> str:
     return f"~{minutes}m {secs}s remaining"
 
 
+class _RunEstimator:
+    """Tracks actual vs. estimated duration of finished phases and uses that
+    ratio to rescale the remaining-time readout as the run progresses.
+
+    A single fixed total-time budget looks honest at the start but goes stale
+    the moment one phase runs long (e.g. a bigger-than-usual transcript) —
+    the countdown hits zero and sticks at "almost done" while real work is
+    still happening. Recalibrating after every phase keeps the estimate
+    self-correcting instead of frozen."""
+
+    def __init__(self):
+        self.completed_estimate = 0.0
+        self.completed_actual = 0.0
+
+    @property
+    def calibration(self) -> float:
+        if self.completed_estimate <= 0:
+            return 1.0
+        return self.completed_actual / self.completed_estimate
+
+    def remaining(self, phase_seconds: float, phase_elapsed: float, future_estimate: float) -> float:
+        cal = self.calibration
+        current_remaining = max(0.0, cal * phase_seconds - phase_elapsed)
+        return current_remaining + cal * future_estimate
+
+    def finish_phase(self, phase_seconds: float, phase_elapsed: float) -> None:
+        self.completed_estimate += phase_seconds
+        self.completed_actual += phase_elapsed
+
+
 def _run_phase(
     fn,
     *args,
@@ -192,8 +240,8 @@ def _run_phase(
     start_frac: float,
     end_frac: float,
     phase_seconds: float,
-    run_start: float,
-    total_estimate: float,
+    future_estimate: float,
+    estimator: _RunEstimator,
     **kwargs,
 ):
     """Runs fn in a background thread while smoothly animating the progress bar
@@ -209,16 +257,18 @@ def _run_phase(
             elapsed = time.time() - phase_start
             progress_ratio = 1 - pow(0.5, elapsed / max(phase_seconds, 1))
             frac = start_frac + (soft_cap - start_frac) * progress_ratio
-            remaining = max(0.0, total_estimate - (time.time() - run_start))
+            remaining = estimator.remaining(phase_seconds, elapsed, future_estimate)
             _render_progress(placeholder, frac, label, _format_remaining(remaining))
             time.sleep(0.3)
         result = future.result()
 
+    phase_elapsed = time.time() - phase_start
+    estimator.finish_phase(phase_seconds, phase_elapsed)
     _render_progress(
         placeholder,
         end_frac,
         label,
-        _format_remaining(max(0.0, total_estimate - (time.time() - run_start))),
+        _format_remaining(estimator.calibration * future_estimate),
     )
     return result
 
@@ -244,9 +294,10 @@ run_clicked = st.button("Run Analysis", disabled=not uploaded_files)
 if run_clicked:
     extractor_outputs = []
     n_files = len(uploaded_files)
-    run_start = time.time()
     file_estimates, synthesis_estimate, report_estimate = _estimate_run_seconds(uploaded_files)
-    total_estimate = sum(file_estimates) + synthesis_estimate + report_estimate
+    all_phase_estimates = file_estimates + [synthesis_estimate, report_estimate]
+    total_estimate = sum(all_phase_estimates)
+    estimator = _RunEstimator()
 
     progress_placeholder = st.empty()
     _render_progress(progress_placeholder, 0.0, "Reading transcripts...", _format_remaining(total_estimate))
@@ -267,8 +318,8 @@ if run_clicked:
                 start_frac=start_frac,
                 end_frac=end_frac,
                 phase_seconds=file_estimates[idx - 1],
-                run_start=run_start,
-                total_estimate=total_estimate,
+                future_estimate=sum(all_phase_estimates[idx:]),
+                estimator=estimator,
             )
         except TranscriptReadError:
             st.warning(f"⚠️ Could not read {uploaded_file.name} — skipping.")
@@ -298,8 +349,8 @@ if run_clicked:
             start_frac=0.7,
             end_frac=0.85,
             phase_seconds=synthesis_estimate,
-            run_start=run_start,
-            total_estimate=total_estimate,
+            future_estimate=sum(all_phase_estimates[n_files + 1:]),
+            estimator=estimator,
         )
         matrix_df, top_df = build_needs_matrix(extractor_outputs)
 
@@ -313,8 +364,8 @@ if run_clicked:
             start_frac=0.85,
             end_frac=1.0,
             phase_seconds=report_estimate,
-            run_start=run_start,
-            total_estimate=total_estimate,
+            future_estimate=0.0,
+            estimator=estimator,
         )
 
         _render_progress(progress_placeholder, 1.0, "Done!")
