@@ -2,9 +2,7 @@ import base64
 import json
 import os
 import tempfile
-import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
@@ -147,132 +145,6 @@ def _copy_button(text: str, label: str):
     )
 
 
-def _render_progress(placeholder, fraction: float, label: str, time_label: str | None = None):
-    pct = max(0, min(100, int(fraction * 100)))
-    time_row = (
-        f"<div style='color: #98A2B3; font-size: 0.75rem; margin-top: 0.35rem;'>{time_label}</div>"
-        if time_label
-        else ""
-    )
-    placeholder.markdown(
-        f"""
-        <div style='margin: 0.5rem 0 1.5rem 0;'>
-            <div style='color: #667085; font-size: 0.85rem; margin-bottom: 0.4rem;'>{label}</div>
-            <div style='background: #EDE9F7; border-radius: 999px; height: 10px; overflow: hidden;'>
-                <div style='width: {pct}%; height: 100%; background: linear-gradient({PAXEL_GRADIENT});
-                            border-radius: 999px; transition: width 0.4s ease;'></div>
-            </div>
-            {time_row}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# Rough heuristics for the "estimated time" readout, calibrated loosely against
-# typical Claude API latency for these calls. They don't need to be precise —
-# just close enough that the countdown feels honest rather than stalled.
-_PER_FILE_BASE_SECONDS = 10.0
-_PER_FILE_SECONDS_PER_KB = 0.02
-_SYNTHESIS_BASE_SECONDS = 8.0
-_SYNTHESIS_SECONDS_PER_FILE = 1.5
-_REPORT_BASE_SECONDS = 8.0
-
-
-def _estimate_file_seconds(uploaded_file) -> float:
-    size_kb = getattr(uploaded_file, "size", 0) / 1024
-    return _PER_FILE_BASE_SECONDS + size_kb * _PER_FILE_SECONDS_PER_KB
-
-
-def _estimate_run_seconds(uploaded_files) -> tuple[list[float], float, float]:
-    """Returns (per-file extraction estimates, synthesis estimate, report estimate)."""
-    file_estimates = [_estimate_file_seconds(f) for f in uploaded_files]
-    synthesis_estimate = _SYNTHESIS_BASE_SECONDS + _SYNTHESIS_SECONDS_PER_FILE * len(uploaded_files)
-    report_estimate = _REPORT_BASE_SECONDS
-    return file_estimates, synthesis_estimate, report_estimate
-
-
-def _format_remaining(seconds: float) -> str:
-    if seconds <= 1:
-        return "almost done..."
-    if seconds < 60:
-        return f"~{int(round(seconds))}s remaining"
-    minutes = int(seconds // 60)
-    secs = int(round(seconds - minutes * 60))
-    return f"~{minutes}m {secs}s remaining"
-
-
-class _RunEstimator:
-    """Tracks actual vs. estimated duration of finished phases and uses that
-    ratio to rescale the remaining-time readout as the run progresses.
-
-    A single fixed total-time budget looks honest at the start but goes stale
-    the moment one phase runs long (e.g. a bigger-than-usual transcript) —
-    the countdown hits zero and sticks at "almost done" while real work is
-    still happening. Recalibrating after every phase keeps the estimate
-    self-correcting instead of frozen."""
-
-    def __init__(self):
-        self.completed_estimate = 0.0
-        self.completed_actual = 0.0
-
-    @property
-    def calibration(self) -> float:
-        if self.completed_estimate <= 0:
-            return 1.0
-        return self.completed_actual / self.completed_estimate
-
-    def remaining(self, phase_seconds: float, phase_elapsed: float, future_estimate: float) -> float:
-        cal = self.calibration
-        current_remaining = max(0.0, cal * phase_seconds - phase_elapsed)
-        return current_remaining + cal * future_estimate
-
-    def finish_phase(self, phase_seconds: float, phase_elapsed: float) -> None:
-        self.completed_estimate += phase_seconds
-        self.completed_actual += phase_elapsed
-
-
-def _run_phase(
-    fn,
-    *args,
-    placeholder,
-    label: str,
-    start_frac: float,
-    end_frac: float,
-    phase_seconds: float,
-    future_estimate: float,
-    estimator: _RunEstimator,
-    **kwargs,
-):
-    """Runs fn in a background thread while smoothly animating the progress bar
-    from start_frac toward end_frac, so long blocking API calls don't leave the
-    bar looking frozen. The bar eases toward a soft cap short of end_frac and
-    only snaps to end_frac once fn actually finishes."""
-    soft_cap = start_frac + (end_frac - start_frac) * 0.92
-    phase_start = time.time()
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(fn, *args, **kwargs)
-        while not future.done():
-            elapsed = time.time() - phase_start
-            progress_ratio = 1 - pow(0.5, elapsed / max(phase_seconds, 1))
-            frac = start_frac + (soft_cap - start_frac) * progress_ratio
-            remaining = estimator.remaining(phase_seconds, elapsed, future_estimate)
-            _render_progress(placeholder, frac, label, _format_remaining(remaining))
-            time.sleep(0.3)
-        result = future.result()
-
-    phase_elapsed = time.time() - phase_start
-    estimator.finish_phase(phase_seconds, phase_elapsed)
-    _render_progress(
-        placeholder,
-        end_frac,
-        label,
-        _format_remaining(estimator.calibration * future_estimate),
-    )
-    return result
-
-
 def _save_upload_to_temp(uploaded_file) -> str:
     suffix = os.path.splitext(uploaded_file.name)[1]
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
@@ -294,40 +166,29 @@ run_clicked = st.button("Run Analysis", disabled=not uploaded_files)
 if run_clicked:
     extractor_outputs = []
     n_files = len(uploaded_files)
-    file_estimates, synthesis_estimate, report_estimate = _estimate_run_seconds(uploaded_files)
-    all_phase_estimates = file_estimates + [synthesis_estimate, report_estimate]
-    total_estimate = sum(all_phase_estimates)
-    estimator = _RunEstimator()
 
     progress_placeholder = st.empty()
-    _render_progress(progress_placeholder, 0.0, "Reading transcripts...", _format_remaining(total_estimate))
+    with progress_placeholder.container():
+        progress_bar = st.progress(0.0)
+        status = st.status("Reading transcript files...", expanded=False)
+
+    progress_bar.progress(0.05)
 
     for idx, uploaded_file in enumerate(uploaded_files, start=1):
-        start_frac = (idx - 1) / n_files * 0.7
-        end_frac = idx / n_files * 0.7
-        label = f"Extracting insights from {uploaded_file.name}... ({idx} of {n_files})"
+        status.update(label=f"Extracting insights from {uploaded_file.name}...")
         tmp_path = None
         try:
             tmp_path = _save_upload_to_temp(uploaded_file)
-            result = _run_phase(
-                extract_insights,
-                tmp_path,
-                api_key=api_key,
-                placeholder=progress_placeholder,
-                label=label,
-                start_frac=start_frac,
-                end_frac=end_frac,
-                phase_seconds=file_estimates[idx - 1],
-                future_estimate=sum(all_phase_estimates[idx:]),
-                estimator=estimator,
-            )
+            result = extract_insights(tmp_path, api_key=api_key)
         except TranscriptReadError:
             st.warning(f"⚠️ Could not read {uploaded_file.name} — skipping.")
+            progress_bar.progress(0.05 + 0.60 * idx / n_files)
             continue
         except Exception as e:
             st.error(f"Analysis failed: {e}")
             with st.expander(f"Debug details — {uploaded_file.name}"):
                 st.code(traceback.format_exc())
+            progress_bar.progress(0.05 + 0.60 * idx / n_files)
             continue
         finally:
             if tmp_path and os.path.exists(tmp_path):
@@ -335,42 +196,24 @@ if run_clicked:
 
         if not result.get("insights"):
             st.info(f"No insights found in {uploaded_file.name}.")
+            progress_bar.progress(0.05 + 0.60 * idx / n_files)
             continue
 
         extractor_outputs.append(result)
+        progress_bar.progress(0.05 + 0.60 * idx / n_files)
 
     if extractor_outputs:
-        synthesis = _run_phase(
-            synthesize,
-            extractor_outputs,
-            api_key=api_key,
-            placeholder=progress_placeholder,
-            label="Synthesizing patterns across all calls...",
-            start_frac=0.7,
-            end_frac=0.85,
-            phase_seconds=synthesis_estimate,
-            future_estimate=sum(all_phase_estimates[n_files + 1:]),
-            estimator=estimator,
-        )
+        status.update(label="Synthesizing patterns across all calls...")
+        synthesis = synthesize(extractor_outputs, api_key=api_key)
+        progress_bar.progress(0.85)
+
         matrix_df, top_df = build_needs_matrix(extractor_outputs)
 
-        report_md, email_draft = _run_phase(
-            generate_report,
-            synthesis,
-            matrix_df,
-            api_key=api_key,
-            placeholder=progress_placeholder,
-            label="Generating your weekly report...",
-            start_frac=0.85,
-            end_frac=1.0,
-            phase_seconds=report_estimate,
-            future_estimate=0.0,
-            estimator=estimator,
-        )
+        status.update(label="Generating your weekly report...")
+        report_md, email_draft = generate_report(synthesis, matrix_df, api_key=api_key)
+        progress_bar.progress(0.95)
 
-        _render_progress(progress_placeholder, 1.0, "Done!")
-        progress_placeholder.empty()
-
+        status.update(label="Finalizing outputs...")
         st.session_state["results"] = {
             "extractor_outputs": extractor_outputs,
             "synthesis": synthesis,
@@ -379,7 +222,12 @@ if run_clicked:
             "report_md": report_md,
             "email_draft": email_draft,
         }
+        progress_bar.progress(1.0)
+        status.update(label="Finalizing outputs...", state="complete")
+
+        progress_placeholder.empty()
     else:
+        status.update(label="No transcripts could be processed.", state="error")
         progress_placeholder.empty()
         st.error("No transcripts could be processed.")
         st.session_state.pop("results", None)
