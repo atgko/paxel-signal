@@ -2,7 +2,9 @@ import base64
 import json
 import os
 import tempfile
+import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
 
@@ -145,6 +147,44 @@ def _copy_button(text: str, label: str):
     )
 
 
+# Fixed pacing for the progress-bar animation below. This has nothing to do
+# with predicting how long anything takes — no duration is ever shown to the
+# user — it just keeps the bar visibly moving while we wait, instead of
+# sitting frozen at one value for several seconds.
+_EASE_SECONDS = 7.0
+_SOFT_CAP_RATIO = 0.92
+
+
+def _ease_to(progress_bar, start_frac: float, end_frac: float, duration: float = 0.4, steps: int = 8):
+    """Animates the bar from start_frac to end_frac over a short fixed
+    duration. Used for steps with no real work to poll (reading, finalizing),
+    so the jump still reads as motion instead of a sudden snap."""
+    for i in range(1, steps + 1):
+        progress_bar.progress(start_frac + (end_frac - start_frac) * (i / steps))
+        time.sleep(duration / steps)
+
+
+def _run_phase(fn, *args, progress_bar, start_frac: float, end_frac: float, **kwargs):
+    """Runs fn in a background thread while easing the progress bar from
+    start_frac toward a soft cap short of end_frac, so the bar keeps
+    creeping forward for as long as fn is still running. Only snaps to
+    end_frac once fn actually finishes — the cap is never reached early."""
+    soft_cap = start_frac + (end_frac - start_frac) * _SOFT_CAP_RATIO
+    phase_start = time.time()
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(fn, *args, **kwargs)
+        while not future.done():
+            elapsed = time.time() - phase_start
+            progress_ratio = 1 - pow(0.5, elapsed / _EASE_SECONDS)
+            progress_bar.progress(start_frac + (soft_cap - start_frac) * progress_ratio)
+            time.sleep(0.2)
+        result = future.result()
+
+    progress_bar.progress(end_frac)
+    return result
+
+
 def _save_upload_to_temp(uploaded_file) -> str:
     suffix = os.path.splitext(uploaded_file.name)[1]
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
@@ -172,23 +212,32 @@ if run_clicked:
         progress_bar = st.progress(0.0)
         status = st.status("Reading transcript files...", expanded=False)
 
-    progress_bar.progress(0.05)
+    _ease_to(progress_bar, 0.0, 0.05)
 
     for idx, uploaded_file in enumerate(uploaded_files, start=1):
         status.update(label=f"Extracting insights from {uploaded_file.name}...")
+        start_frac = 0.05 + 0.60 * (idx - 1) / n_files
+        end_frac = 0.05 + 0.60 * idx / n_files
         tmp_path = None
         try:
             tmp_path = _save_upload_to_temp(uploaded_file)
-            result = extract_insights(tmp_path, api_key=api_key)
+            result = _run_phase(
+                extract_insights,
+                tmp_path,
+                api_key=api_key,
+                progress_bar=progress_bar,
+                start_frac=start_frac,
+                end_frac=end_frac,
+            )
         except TranscriptReadError:
             st.warning(f"⚠️ Could not read {uploaded_file.name} — skipping.")
-            progress_bar.progress(0.05 + 0.60 * idx / n_files)
+            progress_bar.progress(end_frac)
             continue
         except Exception as e:
             st.error(f"Analysis failed: {e}")
             with st.expander(f"Debug details — {uploaded_file.name}"):
                 st.code(traceback.format_exc())
-            progress_bar.progress(0.05 + 0.60 * idx / n_files)
+            progress_bar.progress(end_frac)
             continue
         finally:
             if tmp_path and os.path.exists(tmp_path):
@@ -196,24 +245,38 @@ if run_clicked:
 
         if not result.get("insights"):
             st.info(f"No insights found in {uploaded_file.name}.")
-            progress_bar.progress(0.05 + 0.60 * idx / n_files)
+            progress_bar.progress(end_frac)
             continue
 
         extractor_outputs.append(result)
-        progress_bar.progress(0.05 + 0.60 * idx / n_files)
+        progress_bar.progress(end_frac)
 
     if extractor_outputs:
         status.update(label="Synthesizing patterns across all calls...")
-        synthesis = synthesize(extractor_outputs, api_key=api_key)
-        progress_bar.progress(0.85)
+        synthesis = _run_phase(
+            synthesize,
+            extractor_outputs,
+            api_key=api_key,
+            progress_bar=progress_bar,
+            start_frac=0.65,
+            end_frac=0.85,
+        )
 
         matrix_df, top_df = build_needs_matrix(extractor_outputs)
 
         status.update(label="Generating your weekly report...")
-        report_md, email_draft = generate_report(synthesis, matrix_df, api_key=api_key)
-        progress_bar.progress(0.95)
+        report_md, email_draft = _run_phase(
+            generate_report,
+            synthesis,
+            matrix_df,
+            api_key=api_key,
+            progress_bar=progress_bar,
+            start_frac=0.85,
+            end_frac=0.95,
+        )
 
         status.update(label="Finalizing outputs...")
+        _ease_to(progress_bar, 0.95, 1.0)
         st.session_state["results"] = {
             "extractor_outputs": extractor_outputs,
             "synthesis": synthesis,
@@ -222,7 +285,6 @@ if run_clicked:
             "report_md": report_md,
             "email_draft": email_draft,
         }
-        progress_bar.progress(1.0)
         status.update(label="Finalizing outputs...", state="complete")
 
         progress_placeholder.empty()
